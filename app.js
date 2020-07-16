@@ -11,7 +11,7 @@ const s = (sketch) => {
 
     var stage = HEAD_STAGE
 
-    const surfaceScalar = 0.07
+    const surfaceScalar = 0.05
 
     var bufferWidth
     var bufferHeight
