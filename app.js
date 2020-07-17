@@ -1,7 +1,7 @@
-
 const s = (sketch) => {
 
     const imageFormat = "image/png";
+    const imageQuality = .5
 
     const HEAD_STAGE = 0
     const TORSO_STAGE = 1
@@ -22,7 +22,7 @@ const s = (sketch) => {
     var drawBuffer
     var buffers = []
 
-    //forward delcaration
+    //forward declaration
     var loadData
 
     function compress(s) {
@@ -56,9 +56,9 @@ const s = (sketch) => {
 
         if (stage !== END_STAGE) {
             _.each(stageSections, function (i) {
-                if (stage>i){
+                if (stage > i) {
                     sketch.fillStyle = "#999"
-                    sketch.rect(0, sectionHeight*i, sketch.width, sectionHeight)
+                    sketch.rect(0, sectionHeight * i, sketch.width, sectionHeight)
                 }
 
                 sketch.stroke(0, 0, 255)
@@ -72,9 +72,10 @@ const s = (sketch) => {
             //reset?
         }
     }
-    function generateShareURL(){
+
+    function generateShareURL() {
         function serialize(buf) {
-            var data = buf.canvas.toDataURL(imageFormat);
+            var data = buf.canvas.toDataURL(imageFormat, imageQuality);
             data = compress(data);
             return data
         }
@@ -138,6 +139,7 @@ const s = (sketch) => {
 
         // get the state from the url
         const params = new URLSearchParams(document.location.search.substring(1));
+
         const headData = params.get("headData");
         const torsoData = params.get("torsoData");
         const legsData = params.get("legsData");
@@ -149,23 +151,20 @@ const s = (sketch) => {
             drawBuffer.background(255)
 
             buffers.push(drawBuffer)
-            _.each(buffers, function (b) {b.clear()})
-
-            // setup mouse draw events for first quadrant
-
-
+            _.each(buffers, function (b) {
+                b.clear()
+            })
         } else if (torsoData === "" || torsoData == null) {
             // player 2
             stage = TORSO_STAGE
 
-
             drawBuffer = sketch.createGraphics(bufferWidth, bufferHeightMid)
-            // drawBuffer.background(255)
-            // drawBuffer.clear()
 
             buffers.push(sketch.createGraphics(bufferWidth, bufferHeightMid))
             buffers.push(drawBuffer)
-            _.each(buffers, function (b) {b.clear()})
+            _.each(buffers, function (b) {
+                b.clear()
+            })
 
             let img = document.getElementById("imageDataLoader0")
             img.src = decompress(headData)
@@ -174,15 +173,13 @@ const s = (sketch) => {
         } else if (legsData === "" || legsData == null) {
             // player 3
             stage = LEGS_STAGE
-
             drawBuffer = sketch.createGraphics(bufferWidth, bufferHeight)
-            // drawBuffer.background(255)
-
-
             buffers.push(sketch.createGraphics(bufferWidth, bufferHeightMid))
             buffers.push(sketch.createGraphics(bufferWidth, bufferHeightMid))
             buffers.push(drawBuffer)
-            _.each(buffers, function (b) {b.clear()})
+            _.each(buffers, function (b) {
+                b.clear()
+            })
 
             let img = document.getElementById("imageDataLoader0")
             img.src = decompress(headData)
@@ -197,7 +194,9 @@ const s = (sketch) => {
             buffers.push(sketch.createGraphics(bufferWidth, bufferHeightMid))
             buffers.push(sketch.createGraphics(bufferWidth, bufferHeightMid))
             buffers.push(sketch.createGraphics(bufferWidth, bufferHeight))
-            _.each(buffers, function (b) {b.clear()})
+            _.each(buffers, function (b) {
+                b.clear()
+            })
 
             let img = document.getElementById("imageDataLoader0")
             img.src = decompress(headData)
@@ -208,6 +207,10 @@ const s = (sketch) => {
             img = document.getElementById("imageDataLoader2")
             img.src = decompress(legsData)
             buffers[LEGS_STAGE].canvas.getContext("2d").drawImage(img, 0, 0, bufferWidth, bufferHeight)
+        }
+        for (var i = 0; i < 3; ++i) {
+            let img = document.getElementById("imageDataLoader" + i)
+            img.src = "";
         }
     }
 };
