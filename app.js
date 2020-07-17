@@ -11,6 +11,10 @@ const s = (sketch) => {
 
     var stage = HEAD_STAGE
 
+    const DRAWMODE_DRAW = "Draw"
+    const DRAWMODE_ERASE = "Erase"
+    var drawMode = DRAWMODE_DRAW
+
     const surfaceScalar = 0.05
 
     var bufferWidth
@@ -33,6 +37,26 @@ const s = (sketch) => {
         return LZString.decompressFromEncodedURIComponent(s);
     }
 
+    function setupInstructions() {
+
+        let instructions = ""
+        switch (stage) {
+            case HEAD_STAGE:
+                instructions = "You are drawing the head in the top section. Draw an exquisite head and be sure to draw hints for where the torso should connect. When complete, generate a share URL and give it to the second artist.";
+                break;
+            case TORSO_STAGE:
+                instructions = "You are drawing the torso in the middle section. Be sure to connect your torso to the head using the hint lines given by the first artist. Similarly make sure to draw hints for where the legs should connect to your torso. When complete, generate a share URL and give it to the third artist.";
+                break;
+            case LEGS_STAGE:
+                instructions = "You are drawing the legs in the bottom section. Be sure to connect your legs to the torso hint lines given by the second artist. When complete, generate the final a share URL and share it with all artists. This final URL will reveal the exquisite corpse.";
+                break;
+            case END_STAGE:
+                instructions = "Marvel! The exquisite corpse is complete. Refresh the page if any body parts are missing."
+        }
+        var instrBox = document.getElementById("stageInstructions");
+        instrBox.innerText = instructions
+    }
+
     sketch.setup = () => {
         sketch.createCanvas(800, 1200);
         sketch.background(0);
@@ -41,6 +65,28 @@ const s = (sketch) => {
         if (stage === END_STAGE) {
             sketch.noLoop()
         }
+
+        setupInstructions()
+
+        $("#copyShareUrlBtn").click(function () {
+            var copyText = document.getElementById("shareUrl");
+            copyText.value = generateShareURL();
+
+            /* Select the text field */
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); /*For mobile devices*/
+            /* Copy the text inside the text field */
+            document.execCommand("copy");
+        })
+
+        $('input:radio[name="drawMode"]').change(
+            function(){
+                if (this.checked && this.value === DRAWMODE_DRAW) {
+                    drawMode=DRAWMODE_DRAW
+                }else if (this.checked && this.value===DRAWMODE_ERASE){
+                    drawMode=DRAWMODE_ERASE
+                }
+            })
     };
 
     sketch.draw = () => {
@@ -102,7 +148,7 @@ const s = (sketch) => {
 
     sketch.keyReleased = (e) => {
         if (e.key === "p") {
-            document.getElementById("shareUrl").textContent = generateShareURL();
+            document.getElementById("shareUrl").value = generateShareURL();
         }
     }
 
@@ -113,14 +159,21 @@ const s = (sketch) => {
 
             // allow draw in a segment
 
-            drawBuffer.noStroke()
-            drawBuffer.fill(255, 0, 0)
-            //todo offset by active section
-            let x = sketch.map(e.pageX, 0, sketch.width, 0, bufferWidth)
-            let y = sketch.map(e.pageY, stage * sectionHeight, stage * sectionHeight + sectionHeightMid, 0, bufferHeightMid)
-            drawBuffer.circle(x, y, 1)
-            // drawBuffer.rect
-            // drawBuffer.circle(e.pageX ,e.pageY, 5)
+            let drawSize = 1
+            if (drawMode===DRAWMODE_DRAW) {
+                drawBuffer.noStroke()
+                drawBuffer.fill(0)
+            }else if (drawMode===DRAWMODE_ERASE) {
+                drawBuffer.noStroke()
+                drawBuffer.fill(255,255,255,255)
+                drawBuffer.erase()
+                drawSize *=2
+            }
+            let x = sketch.map(e.offsetX, 0, sketch.width, 0, bufferWidth)
+            let y = sketch.map(e.offsetY, stage * sectionHeight, stage * sectionHeight + sectionHeightMid, 0, bufferHeightMid)
+            drawBuffer.circle(x, y, drawSize)
+            drawBuffer.noErase()
+
             return false
         }
     }
@@ -166,6 +219,7 @@ const s = (sketch) => {
                 b.clear()
             })
 
+            $("body").append('<img class="hideImg" src="" id="imageDataLoader0">')
             let img = document.getElementById("imageDataLoader0")
             img.src = decompress(headData)
 
@@ -181,6 +235,8 @@ const s = (sketch) => {
                 b.clear()
             })
 
+            $("body").append('<img class="hideImg" src="" id="imageDataLoader0">')
+            $("body").append('<img class="hideImg" src="" id="imageDataLoader1">')
             let img = document.getElementById("imageDataLoader0")
             img.src = decompress(headData)
             buffers[HEAD_STAGE].canvas.getContext("2d").drawImage(img, 0, 0, bufferWidth, bufferHeightMid)
@@ -198,6 +254,9 @@ const s = (sketch) => {
                 b.clear()
             })
 
+            $("body").append('<img class="hideImg" src="" id="imageDataLoader0">')
+            $("body").append('<img class="hideImg" src="" id="imageDataLoader1">')
+            $("body").append('<img class="hideImg" src="" id="imageDataLoader2">')
             let img = document.getElementById("imageDataLoader0")
             img.src = decompress(headData)
             buffers[HEAD_STAGE].canvas.getContext("2d").drawImage(img, 0, 0, bufferWidth, bufferHeightMid)
@@ -208,10 +267,12 @@ const s = (sketch) => {
             img.src = decompress(legsData)
             buffers[LEGS_STAGE].canvas.getContext("2d").drawImage(img, 0, 0, bufferWidth, bufferHeight)
         }
-        for (var i = 0; i < 3; ++i) {
-            let img = document.getElementById("imageDataLoader" + i)
-            img.src = "";
-        }
+        // The canvas uses the image as a data source. don't delete them
+        // for (var i = 0; i < 3; ++i) {
+        //     let img = document.getElementById("imageDataLoader" + i)
+        //     if (img !== null)
+        //         img.src = "";
+        // }
     }
 };
 
